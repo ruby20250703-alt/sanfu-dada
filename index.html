@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
@@ -188,6 +188,71 @@
 
     .state-pill.active { display: flex; }
 
+    .replace-result-card {
+      position: absolute;
+      z-index: 9;
+      left: 18px;
+      right: 18px;
+      top: 528px;
+      display: none;
+      min-height: 68px;
+      padding: 12px 16px;
+      border-radius: 20px;
+      border: 1px solid #FFB7CA;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 14px 28px rgba(255, 47, 109, .12);
+      color: var(--text);
+      pointer-events: none;
+    }
+
+    .replace-result-card.active { display: block; }
+
+    .replace-result-card b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--brand);
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .replace-result-card span {
+      display: block;
+      color: #555555;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .tryon-selection {
+      position: absolute;
+      z-index: 7;
+      left: 34px;
+      top: 626px;
+      width: 70px;
+      height: 112px;
+      border: 2px solid var(--brand);
+      border-radius: 17px;
+      pointer-events: none;
+      transition: left .18s ease, top .18s ease;
+    }
+
+    .tryon-selection::after {
+      content: "✓";
+      position: absolute;
+      right: -5px;
+      top: -8px;
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--brand);
+      color: #FFFFFF;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: 0 4px 10px rgba(255, 47, 109, .24);
+    }
+
     @media (max-width: 860px) {
       body { padding: 14px; }
 
@@ -265,24 +330,30 @@
         <button class="hotspot" style="left:309px;top:200px;width:70px;height:78px" data-action="tryon-slot" data-value="包包" aria-label="替换包包"></button>
         <button class="hotspot" style="left:309px;top:316px;width:70px;height:78px" data-action="tryon-slot" data-value="配饰" aria-label="替换配饰"></button>
         <button class="hotspot" style="left:309px;top:432px;width:70px;height:78px" data-action="tryon-slot" data-value="美妆" aria-label="替换美妆"></button>
-        <button class="hotspot" style="left:34px;top:626px;width:70px;height:112px" data-action="select-item" data-name="简约白衬衫" data-price="129" aria-label="选择简约白衬衫"></button>
-        <button class="hotspot" style="left:116px;top:626px;width:70px;height:112px" data-action="select-item" data-name="黑色衬衫" data-price="129" aria-label="选择黑色衬衫"></button>
-        <button class="hotspot" style="left:215px;top:626px;width:70px;height:112px" data-action="select-item" data-name="米色Polo衬衫" data-price="129" aria-label="选择米色 Polo 衬衫"></button>
-        <button class="hotspot" style="left:314px;top:626px;width:70px;height:112px" data-action="select-item" data-name="格子衬衫" data-price="119" aria-label="选择格子衬衫"></button>
+        <button class="hotspot" style="left:34px;top:626px;width:70px;height:112px" data-action="select-item" data-name="简约白衬衫" data-price="129" data-select-left="34" data-select-top="626" aria-label="选择简约白衬衫"></button>
+        <button class="hotspot" style="left:116px;top:626px;width:70px;height:112px" data-action="select-item" data-name="黑色衬衫" data-price="129" data-select-left="116" data-select-top="626" aria-label="选择黑色衬衫"></button>
+        <button class="hotspot" style="left:215px;top:626px;width:70px;height:112px" data-action="select-item" data-name="米色Polo衬衫" data-price="129" data-select-left="215" data-select-top="626" aria-label="选择米色 Polo 衬衫"></button>
+        <button class="hotspot" style="left:314px;top:626px;width:70px;height:112px" data-action="select-item" data-name="格子衬衫" data-price="119" data-select-left="314" data-select-top="626" aria-label="选择格子衬衫"></button>
         <button class="hotspot" style="left:208px;top:808px;width:90px;height:48px" data-action="replace-item" aria-label="替换单品"></button>
         <button class="hotspot" style="left:304px;top:808px;width:86px;height:48px" data-action="add-cart" aria-label="加入购物车"></button>
+        <span class="tryon-selection" id="tryonSelection" aria-hidden="true"></span>
         <span class="state-pill" id="replaceState" style="left:174px;top:758px">已替换</span>
+        <span class="state-pill active" id="replaceChoiceState" style="left:32px;top:588px">当前选择：简约白衬衫</span>
       </article>
 
       <article class="screen" id="resultPage" aria-label="搭案结果">
         <img class="screen-image" src="PNGx2/05-result@2x.png" alt="搭案结果界面" />
         <button class="hotspot" style="left:20px;top:70px;width:48px;height:48px" data-page="needsInput" aria-label="返回需求页"></button>
         <button class="hotspot" style="left:326px;top:512px;width:48px;height:38px" data-toast="搭案已收藏" aria-label="收藏"></button>
-        <button class="hotspot" style="left:306px;top:590px;width:60px;height:44px" data-page="virtualTryon" aria-label="替换浅色衬衫"></button>
-        <button class="hotspot" style="left:306px;top:679px;width:60px;height:44px" data-page="virtualTryon" aria-label="替换直筒裤"></button>
-        <button class="hotspot" style="left:306px;top:768px;width:60px;height:44px" data-page="virtualTryon" aria-label="替换通勤包"></button>
-        <button class="hotspot" style="left:16px;top:808px;width:166px;height:52px" data-page="virtualTryon" aria-label="替换单品"></button>
+        <button class="hotspot" style="left:306px;top:590px;width:60px;height:44px" data-action="open-replace" data-slot="上衣" aria-label="替换浅色衬衫"></button>
+        <button class="hotspot" style="left:306px;top:679px;width:60px;height:44px" data-action="open-replace" data-slot="下装" aria-label="替换直筒裤"></button>
+        <button class="hotspot" style="left:306px;top:768px;width:60px;height:44px" data-action="open-replace" data-slot="包包" aria-label="替换通勤包"></button>
+        <button class="hotspot" style="left:16px;top:808px;width:166px;height:52px" data-action="open-replace" data-slot="上衣" aria-label="替换单品"></button>
         <button class="hotspot" style="left:186px;top:808px;width:200px;height:52px" data-action="add-cart" aria-label="加入购物车"></button>
+        <div class="replace-result-card" id="replaceResultCard" aria-live="polite">
+          <b id="replaceResultTitle">上衣已替换为 简约白衬衫</b>
+          <span id="replaceResultMeta">总价 ¥386 · 适配度 95% · 保持面试局清爽通勤风</span>
+        </div>
       </article>
 
       <article class="screen" id="cart" aria-label="购物车">
@@ -378,6 +449,11 @@
     const loadingText = document.getElementById("loadingText");
     const sceneState = document.getElementById("sceneState");
     const replaceState = document.getElementById("replaceState");
+    const replaceChoiceState = document.getElementById("replaceChoiceState");
+    const replaceResultCard = document.getElementById("replaceResultCard");
+    const replaceResultTitle = document.getElementById("replaceResultTitle");
+    const replaceResultMeta = document.getElementById("replaceResultMeta");
+    const tryonSelection = document.getElementById("tryonSelection");
 
     const sceneCoords = {
       "早八": { left: 34, top: 337 },
@@ -395,6 +471,9 @@
       activeSlot: "上衣",
       selectedItem: "简约白衬衫",
       selectedPrice: 129,
+      selectedLeft: 34,
+      selectedTop: 626,
+      hasReplaced: false,
       cartAdded: false,
       checkedCount: 3
     };
@@ -404,6 +483,9 @@
 
     function showPage(id) {
       screens.forEach(screen => screen.classList.toggle("active", screen.id === id));
+      if (id === "resultPage") {
+        renderReplaceResult();
+      }
       showToast(pageToast(id), 900);
     }
 
@@ -458,6 +540,31 @@
       replaceState.hideTimer = setTimeout(() => replaceState.classList.remove("active"), 1500);
     }
 
+    function updateReplaceChoice() {
+      if (!replaceChoiceState) return;
+      replaceChoiceState.textContent = `${state.activeSlot}选择：${state.selectedItem}`;
+      replaceChoiceState.classList.add("active");
+      if (tryonSelection) {
+        tryonSelection.style.left = `${state.selectedLeft}px`;
+        tryonSelection.style.top = `${state.selectedTop}px`;
+      }
+    }
+
+    function openReplace(slot) {
+      state.activeSlot = slot || "上衣";
+      updateReplaceChoice();
+      setReplaceState(`正在替换${state.activeSlot}`);
+      showPage("virtualTryon");
+    }
+
+    function renderReplaceResult() {
+      if (!replaceResultCard) return;
+      replaceResultCard.classList.toggle("active", state.hasReplaced);
+      if (!state.hasReplaced) return;
+      replaceResultTitle.textContent = `${state.activeSlot}已替换为 ${state.selectedItem}`;
+      replaceResultMeta.textContent = `总价 ¥386 · 适配度 95% · 保持${state.scene}局清爽通勤风`;
+    }
+
     function handleAction(button) {
       const action = button.dataset.action;
       const value = button.dataset.value;
@@ -484,8 +591,14 @@
         return;
       }
 
+      if (action === "open-replace") {
+        openReplace(button.dataset.slot || "上衣");
+        return;
+      }
+
       if (action === "tryon-slot") {
         state.activeSlot = value;
+        updateReplaceChoice();
         setReplaceState(`正在替换${value}`);
         showToast(`已切换到${value}`);
         return;
@@ -494,13 +607,18 @@
       if (action === "select-item") {
         state.selectedItem = button.dataset.name || "简约白衬衫";
         state.selectedPrice = Number(button.dataset.price || 129);
+        state.selectedLeft = Number(button.dataset.selectLeft || 34);
+        state.selectedTop = Number(button.dataset.selectTop || 626);
+        updateReplaceChoice();
         setReplaceState(`${state.selectedItem}`);
         showToast(`已选择${state.selectedItem}`);
         return;
       }
 
       if (action === "replace-item") {
+        state.hasReplaced = true;
         setReplaceState("替换成功");
+        showLoading(`${state.activeSlot}替换中`, "resultPage");
         showToast(`${state.activeSlot}已替换为${state.selectedItem}`);
         return;
       }
