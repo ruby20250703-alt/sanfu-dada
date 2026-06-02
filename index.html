@@ -1,0 +1,555 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>三福搭搭 - 图片保真交互原型</title>
+  <style>
+    :root {
+      --brand: #FF2F6D;
+      --brand-2: #FF6548;
+      --pink: #FFF3F7;
+      --page: #F7F7F8;
+      --text: #222222;
+      --muted: #888888;
+      --line: #EAEAEA;
+      --phone-w: 402px;
+      --phone-h: 874px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: linear-gradient(135deg, #FFF3F7, #F7F7F8 62%, #FFFFFF);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    button {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .workspace {
+      width: var(--phone-w);
+      max-width: 100%;
+    }
+
+    .phone {
+      width: var(--phone-w);
+      height: var(--phone-h);
+      position: relative;
+      overflow: hidden;
+      border-radius: 0;
+      background: var(--page);
+      box-shadow: 0 24px 70px rgba(34, 34, 34, .22);
+    }
+
+    .phone-screen {
+      position: relative;
+      width: var(--phone-w);
+      height: var(--phone-h);
+      overflow: hidden;
+      border-radius: 0;
+      background: var(--page);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      overflow: hidden;
+      background: var(--page);
+    }
+
+    .screen.active { display: block; }
+
+    .screen-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .hotspot {
+      position: absolute;
+      z-index: 5;
+      border-radius: 18px;
+    }
+
+    .hotspot:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+      background: rgba(255, 47, 109, .08);
+    }
+
+    .hotspot.debug {
+      background: rgba(255, 47, 109, .18);
+      box-shadow: inset 0 0 0 1px rgba(255, 47, 109, .45);
+    }
+
+    .tab-hotspot { border-radius: 8px; }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 12;
+      display: none;
+      place-items: center;
+      background: rgba(255, 243, 247, .62);
+      backdrop-filter: blur(5px);
+    }
+
+    .overlay.active { display: grid; }
+
+    .loading-card {
+      width: 244px;
+      min-height: 126px;
+      display: grid;
+      place-items: center;
+      gap: 14px;
+      padding: 24px;
+      border-radius: 24px;
+      background: #FFFFFF;
+      color: var(--brand);
+      font-size: 18px;
+      font-weight: 800;
+      box-shadow: 0 18px 50px rgba(255, 47, 109, .20);
+      text-align: center;
+    }
+
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 4px solid #FFE1EA;
+      border-top-color: var(--brand);
+      animation: spin .75s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 92px;
+      z-index: 40;
+      max-width: 320px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      color: #FFFFFF;
+      background: rgba(34, 34, 34, .86);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+      opacity: 0;
+      transform: translate(-50%, 16px);
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events: none;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .state-pill {
+      position: absolute;
+      z-index: 8;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 70px;
+      min-height: 30px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #FFB7CA;
+      background: rgba(255, 243, 247, .94);
+      color: var(--brand);
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 8px 22px rgba(255, 47, 109, .10);
+      pointer-events: none;
+    }
+
+    .state-pill.active { display: flex; }
+
+    @media (max-width: 860px) {
+      body { padding: 14px; }
+
+      .workspace {
+        display: block;
+        width: var(--phone-w);
+        max-width: 100%;
+      }
+
+      .phone {
+        width: min(var(--phone-w), calc(100vw - 28px));
+        height: calc((min(var(--phone-w), calc(100vw - 28px))) * 874 / 402);
+      }
+
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="workspace">
+    <section class="phone" aria-label="三福搭搭交互原型">
+      <div class="phone-screen">
+      <article class="screen active" id="home" aria-label="首页">
+        <img class="screen-image" src="PNGx2/01-home@2x.png" alt="首页界面" />
+        <button class="hotspot" style="left:33px;top:288px;width:94px;height:44px" data-page="sceneSelect" aria-label="开始搭配"></button>
+        <button class="hotspot" style="left:18px;top:418px;width:116px;height:144px" data-action="select-scene" data-scene="早八" data-page="sceneSelect" aria-label="选择早八场景"></button>
+        <button class="hotspot" style="left:144px;top:418px;width:116px;height:144px" data-action="select-scene" data-scene="约会" data-page="sceneSelect" aria-label="选择约会场景"></button>
+        <button class="hotspot" style="left:270px;top:418px;width:116px;height:144px" data-action="select-scene" data-scene="面试" data-page="sceneSelect" aria-label="选择面试场景"></button>
+        <button class="hotspot" style="left:18px;top:578px;width:116px;height:136px" data-action="select-scene" data-scene="旅行" data-page="sceneSelect" aria-label="选择旅行场景"></button>
+        <button class="hotspot" style="left:144px;top:578px;width:116px;height:136px" data-action="select-scene" data-scene="送礼" data-page="sceneSelect" aria-label="选择送礼场景"></button>
+        <button class="hotspot" style="left:270px;top:578px;width:116px;height:136px" data-action="select-scene" data-scene="聚会" data-page="sceneSelect" aria-label="选择聚会场景"></button>
+        <button class="hotspot tab-hotspot" style="left:0;top:790px;width:80px;height:84px" data-page="home" aria-label="首页"></button>
+        <button class="hotspot tab-hotspot" style="left:80px;top:790px;width:80px;height:84px" data-page="category" aria-label="分类"></button>
+        <button class="hotspot tab-hotspot" style="left:160px;top:790px;width:82px;height:84px" data-page="sceneSelect" aria-label="搭搭"></button>
+        <button class="hotspot tab-hotspot" style="left:242px;top:790px;width:80px;height:84px" data-page="cart" aria-label="购物车"></button>
+        <button class="hotspot tab-hotspot" style="left:322px;top:790px;width:80px;height:84px" data-page="profile" aria-label="我的"></button>
+      </article>
+
+      <article class="screen" id="sceneSelect" aria-label="选择场景">
+        <img class="screen-image" src="PNGx2/02-scene-select@2x.png" alt="选择场景界面" />
+        <button class="hotspot" style="left:23px;top:70px;width:48px;height:48px" data-page="home" aria-label="返回首页"></button>
+        <button class="hotspot" style="left:18px;top:228px;width:116px;height:140px" data-action="select-scene" data-scene="早八" aria-label="选择早八"></button>
+        <button class="hotspot" style="left:144px;top:228px;width:116px;height:140px" data-action="select-scene" data-scene="约会" aria-label="选择约会"></button>
+        <button class="hotspot" style="left:270px;top:228px;width:116px;height:140px" data-action="select-scene" data-scene="面试" aria-label="选择面试"></button>
+        <button class="hotspot" style="left:18px;top:388px;width:116px;height:138px" data-action="select-scene" data-scene="旅行" aria-label="选择旅行"></button>
+        <button class="hotspot" style="left:144px;top:388px;width:116px;height:138px" data-action="select-scene" data-scene="送礼" aria-label="选择送礼"></button>
+        <button class="hotspot" style="left:270px;top:388px;width:116px;height:138px" data-action="select-scene" data-scene="聚会" aria-label="选择聚会"></button>
+        <button class="hotspot" style="left:16px;top:808px;width:370px;height:52px" data-page="needsInput" aria-label="下一步"></button>
+        <span class="state-pill active" id="sceneState" style="left:288px;top:337px">面试</span>
+      </article>
+
+      <article class="screen" id="needsInput" aria-label="搭配需求">
+        <img class="screen-image" src="PNGx2/03-needs@2x.png" alt="搭配需求界面" />
+        <button class="hotspot" style="left:20px;top:70px;width:48px;height:48px" data-page="sceneSelect" aria-label="返回选择场景"></button>
+        <button class="hotspot" style="left:30px;top:315px;width:92px;height:34px" data-action="select-budget" data-value="200以内" aria-label="预算 200 以内"></button>
+        <button class="hotspot" style="left:128px;top:315px;width:94px;height:34px" data-action="select-budget" data-value="300-500元" aria-label="预算 300 到 500"></button>
+        <button class="hotspot" style="left:229px;top:315px;width:92px;height:34px" data-action="select-budget" data-value="500-800元" aria-label="预算 500 到 800"></button>
+        <button class="hotspot" style="left:30px;top:390px;width:88px;height:34px" data-action="select-style" data-value="清爽通勤" aria-label="清爽通勤"></button>
+        <button class="hotspot" style="left:128px;top:390px;width:55px;height:34px" data-action="select-style" data-value="甜酷" aria-label="甜酷"></button>
+        <button class="hotspot" style="left:192px;top:390px;width:86px;height:34px" data-action="select-style" data-value="松弛休闲" aria-label="松弛休闲"></button>
+        <button class="hotspot" style="left:289px;top:390px;width:64px;height:34px" data-action="select-style" data-value="显瘦" aria-label="显瘦"></button>
+        <button class="hotspot" style="left:16px;top:808px;width:370px;height:52px" data-action="generate" aria-label="生成搭案"></button>
+      </article>
+
+      <article class="screen" id="virtualTryon" aria-label="替换上衣">
+        <img class="screen-image" src="PNGx2/04-replace-item@2x.png" alt="替换上衣界面" />
+        <button class="hotspot" style="left:20px;top:70px;width:48px;height:48px" data-page="resultPage" aria-label="返回搭案结果"></button>
+        <button class="hotspot" style="left:294px;top:128px;width:90px;height:28px" data-toast="已进入搭配预览" aria-label="搭配预览"></button>
+        <button class="hotspot" style="left:24px;top:200px;width:70px;height:78px" data-action="tryon-slot" data-value="上衣" aria-label="替换上衣"></button>
+        <button class="hotspot" style="left:24px;top:316px;width:70px;height:78px" data-action="tryon-slot" data-value="下装" aria-label="替换下装"></button>
+        <button class="hotspot" style="left:24px;top:432px;width:70px;height:78px" data-action="tryon-slot" data-value="鞋子" aria-label="替换鞋子"></button>
+        <button class="hotspot" style="left:309px;top:200px;width:70px;height:78px" data-action="tryon-slot" data-value="包包" aria-label="替换包包"></button>
+        <button class="hotspot" style="left:309px;top:316px;width:70px;height:78px" data-action="tryon-slot" data-value="配饰" aria-label="替换配饰"></button>
+        <button class="hotspot" style="left:309px;top:432px;width:70px;height:78px" data-action="tryon-slot" data-value="美妆" aria-label="替换美妆"></button>
+        <button class="hotspot" style="left:34px;top:626px;width:70px;height:112px" data-action="select-item" data-name="简约白衬衫" data-price="129" aria-label="选择简约白衬衫"></button>
+        <button class="hotspot" style="left:116px;top:626px;width:70px;height:112px" data-action="select-item" data-name="黑色衬衫" data-price="129" aria-label="选择黑色衬衫"></button>
+        <button class="hotspot" style="left:215px;top:626px;width:70px;height:112px" data-action="select-item" data-name="米色Polo衬衫" data-price="129" aria-label="选择米色 Polo 衬衫"></button>
+        <button class="hotspot" style="left:314px;top:626px;width:70px;height:112px" data-action="select-item" data-name="格子衬衫" data-price="119" aria-label="选择格子衬衫"></button>
+        <button class="hotspot" style="left:208px;top:808px;width:90px;height:48px" data-action="replace-item" aria-label="替换单品"></button>
+        <button class="hotspot" style="left:304px;top:808px;width:86px;height:48px" data-action="add-cart" aria-label="加入购物车"></button>
+        <span class="state-pill" id="replaceState" style="left:174px;top:758px">已替换</span>
+      </article>
+
+      <article class="screen" id="resultPage" aria-label="搭案结果">
+        <img class="screen-image" src="PNGx2/05-result@2x.png" alt="搭案结果界面" />
+        <button class="hotspot" style="left:20px;top:70px;width:48px;height:48px" data-page="needsInput" aria-label="返回需求页"></button>
+        <button class="hotspot" style="left:326px;top:512px;width:48px;height:38px" data-toast="搭案已收藏" aria-label="收藏"></button>
+        <button class="hotspot" style="left:306px;top:590px;width:60px;height:44px" data-page="virtualTryon" aria-label="替换浅色衬衫"></button>
+        <button class="hotspot" style="left:306px;top:679px;width:60px;height:44px" data-page="virtualTryon" aria-label="替换直筒裤"></button>
+        <button class="hotspot" style="left:306px;top:768px;width:60px;height:44px" data-page="virtualTryon" aria-label="替换通勤包"></button>
+        <button class="hotspot" style="left:16px;top:808px;width:166px;height:52px" data-page="virtualTryon" aria-label="替换单品"></button>
+        <button class="hotspot" style="left:186px;top:808px;width:200px;height:52px" data-action="add-cart" aria-label="加入购物车"></button>
+      </article>
+
+      <article class="screen" id="cart" aria-label="购物车">
+        <img class="screen-image" src="PNGx2/06-cart@2x.png" alt="购物车界面" />
+        <button class="hotspot" style="left:23px;top:70px;width:48px;height:48px" data-page="resultPage" aria-label="返回搭案结果"></button>
+        <button class="hotspot" style="left:28px;top:342px;width:44px;height:44px" data-action="toggle-check" aria-label="勾选浅色衬衫"></button>
+        <button class="hotspot" style="left:28px;top:468px;width:44px;height:44px" data-action="toggle-check" aria-label="勾选直筒裤"></button>
+        <button class="hotspot" style="left:28px;top:596px;width:44px;height:44px" data-action="toggle-check" aria-label="勾选通勤包"></button>
+        <button class="hotspot" style="left:16px;top:746px;width:166px;height:52px" data-page="virtualTryon" aria-label="继续替换"></button>
+        <button class="hotspot" style="left:186px;top:746px;width:200px;height:52px" data-toast="已提交搭案结算" aria-label="结算搭案"></button>
+        <button class="hotspot tab-hotspot" style="left:0;top:790px;width:80px;height:84px" data-page="home" aria-label="首页"></button>
+        <button class="hotspot tab-hotspot" style="left:80px;top:790px;width:80px;height:84px" data-page="category" aria-label="分类"></button>
+        <button class="hotspot tab-hotspot" style="left:160px;top:790px;width:82px;height:84px" data-page="sceneSelect" aria-label="搭搭"></button>
+        <button class="hotspot tab-hotspot" style="left:242px;top:790px;width:80px;height:84px" data-page="cart" aria-label="购物车"></button>
+        <button class="hotspot tab-hotspot" style="left:322px;top:790px;width:80px;height:84px" data-page="profile" aria-label="我的"></button>
+      </article>
+
+      <article class="screen" id="profile" aria-label="我的">
+        <img class="screen-image" src="PNGx2/07-profile@2x.png" alt="我的界面" />
+        <button class="hotspot" style="left:22px;top:70px;width:48px;height:48px" data-page="home" aria-label="返回首页"></button>
+        <button class="hotspot" style="left:300px;top:153px;width:70px;height:40px" data-toast="签到成功" aria-label="签到"></button>
+        <button class="hotspot" style="left:34px;top:508px;width:106px;height:76px" data-page="resultPage" aria-label="我的搭案"></button>
+        <button class="hotspot" style="left:148px;top:508px;width:106px;height:76px" data-toast="已打开我的收藏" aria-label="我的收藏"></button>
+        <button class="hotspot" style="left:264px;top:508px;width:106px;height:76px" data-toast="已打开最近生成" aria-label="最近生成"></button>
+        <button class="hotspot tab-hotspot" style="left:0;top:790px;width:80px;height:84px" data-page="home" aria-label="首页"></button>
+        <button class="hotspot tab-hotspot" style="left:80px;top:790px;width:80px;height:84px" data-page="category" aria-label="分类"></button>
+        <button class="hotspot tab-hotspot" style="left:160px;top:790px;width:82px;height:84px" data-page="sceneSelect" aria-label="搭搭"></button>
+        <button class="hotspot tab-hotspot" style="left:242px;top:790px;width:80px;height:84px" data-page="cart" aria-label="购物车"></button>
+        <button class="hotspot tab-hotspot" style="left:322px;top:790px;width:80px;height:84px" data-page="profile" aria-label="我的"></button>
+      </article>
+
+      <article class="screen" id="category" aria-label="分类">
+        <img class="screen-image" src="PNGx2/08-category@2x.png" alt="分类界面" />
+        <button class="hotspot" style="left:23px;top:70px;width:48px;height:48px" data-page="home" aria-label="返回首页"></button>
+        <button class="hotspot" style="left:36px;top:105px;width:330px;height:42px" data-page="products" aria-label="搜索三福好物"></button>
+        <button class="hotspot" style="left:18px;top:219px;width:56px;height:31px" data-action="select-scene" data-scene="早八" aria-label="早八"></button>
+        <button class="hotspot" style="left:80px;top:219px;width:56px;height:31px" data-action="select-scene" data-scene="约会" aria-label="约会"></button>
+        <button class="hotspot" style="left:144px;top:219px;width:56px;height:31px" data-action="select-scene" data-scene="面试" aria-label="面试"></button>
+        <button class="hotspot" style="left:128px;top:269px;width:252px;height:100px" data-page="sceneSelect" aria-label="三福搭搭组合入口"></button>
+        <button class="hotspot" style="left:128px;top:450px;width:65px;height:145px" data-page="products" aria-label="女装男装商品"></button>
+        <button class="hotspot" style="left:216px;top:450px;width:65px;height:145px" data-page="products" aria-label="清爽上衣商品"></button>
+        <button class="hotspot" style="left:306px;top:450px;width:65px;height:145px" data-page="products" aria-label="鞋靴箱包商品"></button>
+        <button class="hotspot tab-hotspot" style="left:0;top:790px;width:80px;height:84px" data-page="home" aria-label="首页"></button>
+        <button class="hotspot tab-hotspot" style="left:80px;top:790px;width:80px;height:84px" data-page="category" aria-label="分类"></button>
+        <button class="hotspot tab-hotspot" style="left:160px;top:790px;width:82px;height:84px" data-page="sceneSelect" aria-label="搭搭"></button>
+        <button class="hotspot tab-hotspot" style="left:242px;top:790px;width:80px;height:84px" data-page="cart" aria-label="购物车"></button>
+        <button class="hotspot tab-hotspot" style="left:322px;top:790px;width:80px;height:84px" data-page="profile" aria-label="我的"></button>
+      </article>
+
+      <article class="screen" id="products" aria-label="商品列表">
+        <img class="screen-image" src="PNGx2/09-product-list@2x.png" alt="商品列表界面" />
+        <button class="hotspot" style="left:23px;top:70px;width:48px;height:48px" data-page="category" aria-label="返回分类"></button>
+        <button class="hotspot" style="left:32px;top:104px;width:334px;height:44px" data-toast="已聚焦商品搜索" aria-label="搜索商品"></button>
+        <button class="hotspot" style="left:18px;top:260px;width:94px;height:34px" data-action="filter" data-value="面试清爽" aria-label="面试清爽筛选"></button>
+        <button class="hotspot" style="left:18px;top:350px;width:176px;height:214px" data-page="detail" aria-label="查看夏季男士衬衫"></button>
+        <button class="hotspot" style="left:98px;top:518px;width:88px;height:38px" data-action="add-outfit" aria-label="加入搭案"></button>
+        <button class="hotspot" style="left:206px;top:350px;width:176px;height:214px" data-page="detail" aria-label="查看长衬衫"></button>
+        <button class="hotspot" style="left:296px;top:518px;width:82px;height:38px" data-action="add-outfit" aria-label="加入搭案"></button>
+        <button class="hotspot tab-hotspot" style="left:0;top:790px;width:80px;height:84px" data-page="home" aria-label="首页"></button>
+        <button class="hotspot tab-hotspot" style="left:80px;top:790px;width:80px;height:84px" data-page="category" aria-label="分类"></button>
+        <button class="hotspot tab-hotspot" style="left:160px;top:790px;width:82px;height:84px" data-page="sceneSelect" aria-label="搭搭"></button>
+        <button class="hotspot tab-hotspot" style="left:242px;top:790px;width:80px;height:84px" data-page="cart" aria-label="购物车"></button>
+        <button class="hotspot tab-hotspot" style="left:322px;top:790px;width:80px;height:84px" data-page="profile" aria-label="我的"></button>
+      </article>
+
+      <article class="screen" id="detail" aria-label="商品详情">
+        <img class="screen-image" src="PNGx2/10-product-detail@2x.png" alt="商品详情界面" />
+        <button class="hotspot" style="left:22px;top:70px;width:48px;height:48px" data-page="products" aria-label="返回商品列表"></button>
+        <button class="hotspot" style="left:232px;top:494px;width:134px;height:38px" data-page="resultPage" aria-label="查看搭案匹配"></button>
+        <button class="hotspot" style="left:32px;top:687px;width:164px;height:46px" data-toast="请选择颜色和尺码" aria-label="选择颜色尺码"></button>
+        <button class="hotspot" style="left:34px;top:750px;width:262px;height:48px" data-page="sceneSelect" aria-label="用三福搭搭生成整套方案"></button>
+        <button class="hotspot" style="left:118px;top:807px;width:84px;height:48px" data-action="add-outfit" aria-label="加入搭案"></button>
+        <button class="hotspot" style="left:212px;top:807px;width:92px;height:48px" data-action="add-cart" aria-label="加购物车"></button>
+        <button class="hotspot" style="left:306px;top:807px;width:86px;height:48px" data-toast="已进入购买流程" aria-label="立即购买"></button>
+      </article>
+
+      <div class="overlay" id="loadingOverlay" aria-live="polite">
+        <div class="loading-card">
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="loadingText">正在生成搭案</span>
+        </div>
+      </div>
+      <div class="toast" id="toast">已完成</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const screens = [...document.querySelectorAll(".screen")];
+    const toast = document.getElementById("toast");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingText = document.getElementById("loadingText");
+    const sceneState = document.getElementById("sceneState");
+    const replaceState = document.getElementById("replaceState");
+
+    const sceneCoords = {
+      "早八": { left: 34, top: 337 },
+      "约会": { left: 160, top: 337 },
+      "面试": { left: 288, top: 337 },
+      "旅行": { left: 34, top: 497 },
+      "送礼": { left: 160, top: 497 },
+      "聚会": { left: 288, top: 497 }
+    };
+
+    const state = {
+      scene: "面试",
+      budget: "300-500元",
+      style: "清爽通勤",
+      activeSlot: "上衣",
+      selectedItem: "简约白衬衫",
+      selectedPrice: 129,
+      cartAdded: false,
+      checkedCount: 3
+    };
+
+    let toastTimer;
+    let loadingTimer;
+
+    function showPage(id) {
+      screens.forEach(screen => screen.classList.toggle("active", screen.id === id));
+      showToast(pageToast(id), 900);
+    }
+
+    function pageToast(id) {
+      const names = {
+        home: "首页",
+        sceneSelect: "选择场景",
+        needsInput: "搭配需求",
+        virtualTryon: "替换单品",
+        resultPage: "搭案结果",
+        cart: "购物车",
+        profile: "我的",
+        category: "分类",
+        products: "商品列表",
+        detail: "商品详情"
+      };
+      return names[id] ? `已进入${names[id]}` : "已完成";
+    }
+
+    function showToast(message, duration = 1500) {
+      toast.textContent = message || "已完成";
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), duration);
+    }
+
+    function showLoading(message, nextPage) {
+      loadingText.textContent = message;
+      loadingOverlay.classList.add("active");
+      clearTimeout(loadingTimer);
+      loadingTimer = setTimeout(() => {
+        loadingOverlay.classList.remove("active");
+        if (nextPage) showPage(nextPage);
+      }, 950);
+    }
+
+    function selectScene(scene) {
+      state.scene = scene;
+      if (sceneState && sceneCoords[scene]) {
+        sceneState.textContent = scene;
+        sceneState.style.left = `${sceneCoords[scene].left}px`;
+        sceneState.style.top = `${sceneCoords[scene].top}px`;
+        sceneState.classList.add("active");
+      }
+      showToast(`已选择${scene}场景`);
+    }
+
+    function setReplaceState(message) {
+      replaceState.textContent = message;
+      replaceState.classList.add("active");
+      clearTimeout(replaceState.hideTimer);
+      replaceState.hideTimer = setTimeout(() => replaceState.classList.remove("active"), 1500);
+    }
+
+    function handleAction(button) {
+      const action = button.dataset.action;
+      const value = button.dataset.value;
+
+      if (action === "select-scene") {
+        selectScene(button.dataset.scene || "面试");
+        return;
+      }
+
+      if (action === "select-budget") {
+        state.budget = value;
+        showToast(`预算已设为${value}`);
+        return;
+      }
+
+      if (action === "select-style") {
+        state.style = value;
+        showToast(`风格偏好：${value}`);
+        return;
+      }
+
+      if (action === "generate") {
+        showLoading("正在生成搭案", "resultPage");
+        return;
+      }
+
+      if (action === "tryon-slot") {
+        state.activeSlot = value;
+        setReplaceState(`正在替换${value}`);
+        showToast(`已切换到${value}`);
+        return;
+      }
+
+      if (action === "select-item") {
+        state.selectedItem = button.dataset.name || "简约白衬衫";
+        state.selectedPrice = Number(button.dataset.price || 129);
+        setReplaceState(`${state.selectedItem}`);
+        showToast(`已选择${state.selectedItem}`);
+        return;
+      }
+
+      if (action === "replace-item") {
+        setReplaceState("替换成功");
+        showToast(`${state.activeSlot}已替换为${state.selectedItem}`);
+        return;
+      }
+
+      if (action === "add-outfit") {
+        showToast("已加入搭案，可继续组合整套方案");
+        setTimeout(() => showPage("resultPage"), 450);
+        return;
+      }
+
+      if (action === "add-cart") {
+        state.cartAdded = true;
+        showToast("已加入购物车");
+        setTimeout(() => showPage("cart"), 550);
+        return;
+      }
+
+      if (action === "toggle-check") {
+        state.checkedCount = state.checkedCount === 0 ? 3 : state.checkedCount - 1;
+        showToast(state.checkedCount ? `已选择 ${state.checkedCount} 件商品` : "已取消全部选择");
+        return;
+      }
+
+      if (action === "filter") {
+        showToast(`已筛选：${value}`);
+        return;
+      }
+
+    }
+
+    document.addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (!button) return;
+
+      if (button.dataset.toast) {
+        showToast(button.dataset.toast);
+      }
+
+      if (button.dataset.action) {
+        handleAction(button);
+      }
+
+      if (button.dataset.page) {
+        showPage(button.dataset.page);
+      }
+    });
+
+    showPage("home");
+  </script>
+</body>
+</html>
+
